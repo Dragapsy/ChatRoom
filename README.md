@@ -92,7 +92,7 @@ After having modified model classes, if you want to update the database with cha
 
 ```bash
 ~$ cd ./ChatRoom.Repository
-~$ dotnet ef migrations add ChatRoomName -s ..\ChatRoom.Startup\ 20241224111800_OfferBatchUpdateAt
+~$ dotnet ef migrations add ChatRoomName -s ..\Chat.Startup\ 
 ```
 The launch of the app will execute the migration.
 

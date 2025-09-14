@@ -75,4 +75,20 @@
     </div>
 
   </div>
+
+  <button class="fab-create" type="button" title="Créer une chatroom" (click)="showCreateModal.set(true)">+</button>
+
+  @if (showCreateModal()) {
+    <div class="modal-backdrop" (click)="showCreateModal.set(false)"></div>
+    <div class="modal">
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="createRoomTitle">
+        <button class="modal-close" type="button" (click)="showCreateModal.set(false)">✕</button>
+        <h3 id="createRoomTitle" class="modal-title">Créer une chatroom</h3>
+
+        <app-chatrooms-create (created)="showCreateModal.set(false)"></app-chatrooms-create>
+      </div>
+    </div>
+}
+
+
 }

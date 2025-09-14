@@ -33,6 +33,12 @@ export const routes: Routes = [
 				component: MainIndexComponent,
 			},
 			{
+				path: `${SITEMAP.chatrooms.path}/${SITEMAP.chatrooms.create.path}`,
+				canActivate: [isAuthenticatedGuard],
+				loadComponent: () =>
+					import('./chatrooms/create/create.component').then(m => m.CreateComponent),
+			},
+			{
 				path: SITEMAP.account.path,
 				canActivate: [isAuthenticatedGuard],
 				component: MainAccountComponent,

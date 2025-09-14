@@ -13,6 +13,9 @@ import { SITEMAP } from 'src/app/_common/sitemap';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ChatSvgIconComponent } from '../../_common/components/chat-svg-icon/chat-svg-icon.component';
+import { CreateComponent as ChatroomsCreateComponent } from 'src/app/chatrooms/create/create.component';
+import { MessagingService } from 'src/app/_common/services/messaging/messaging.service';
+
 
 @Component({
 	selector: 'app-main-dashboard',
@@ -24,6 +27,7 @@ import { ChatSvgIconComponent } from '../../_common/components/chat-svg-icon/cha
 		ChatButtonGroupComponent,
 		ChatButtonComponent,
 		ChatSvgIconComponent,
+		ChatroomsCreateComponent
 	],
 	providers: [
 		provideIcons({
@@ -37,8 +41,9 @@ import { ChatSvgIconComponent } from '../../_common/components/chat-svg-icon/cha
 	styleUrl: './main-dashboard.component.scss',
 	templateUrl: './main-dashboard.component.html',
 })
-export class MainDashboardComponent {
+export class MainDashboardComponent implements OnInit {
 	private readonly _accountSvc = inject(AccountService);
+	private readonly messagingService = inject(MessagingService); 
 
 	public readonly sitemap = SITEMAP;
 
@@ -52,5 +57,17 @@ export class MainDashboardComponent {
 	public viewSelected: number = 1;
 
 	constructor() {}
+	ngOnInit(): void {
+		this.messagingService.loadInitialChatRooms();
+	}
 
+	public showCreateModal = signal(false);
+
+	openCreateModal() { 
+		this.showCreateModal.set(true); 
+	}
+
+	closeCreateModal() { 
+		this.showCreateModal.set(false); 
+	}
 }

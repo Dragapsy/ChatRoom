@@ -1,0 +1,28 @@
+.create-form {
+  display: flex;
+  gap: .5rem;
+  align-items: center;
+}
+
+.create-form input {
+  min-width: 260px;
+  padding: .5rem .6rem;
+}
+
+.create-form button {
+  padding: .5rem .8rem;
+  cursor: pointer;
+}
+
+.result {
+  margin-top: .6rem;
+  font-size: .95rem;
+}
+
+.result.ok {
+  color: #1b5e20;
+}
+
+.result.error {
+  color: #c62828;
+}

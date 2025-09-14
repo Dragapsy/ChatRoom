@@ -1,77 +1,86 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { environment } from 'src/environments/environment';
 import { ChatMessage } from '../../models/chat-message.model';
 import { ChatRoom } from '../../models/chat-room.model';
-import { SignalRClientBase } from '../signalr/signalr.client.base';
+import { HubConnection, HubConnectionBuilder, HubConnectionState, LogLevel } from '@microsoft/signalr';
 
 @Injectable({
-	providedIn: 'root',
+    providedIn: 'root',
 })
-export class MessagingService extends SignalRClientBase {
+export class MessagingService {
 
-	constructor() {
-		super(environment.API_URL + '/hub/messaging');
+    public chatRooms = signal<ChatRoom[]>([]);
+    
+    private _hubConnection: HubConnection;
+    private connectionPromise: Promise<void>;
 
-		// Handle messaging events
-		this._hubConnection.on('NewMessage', (message: ChatMessage) => {
-			console.log('New message received:', message);
+    constructor() {
+        this._hubConnection = new HubConnectionBuilder()
+            .withUrl(environment.API_URL + '/hub/messaging')
+            .withAutomaticReconnect() 
+            .configureLogging(LogLevel.Information)
+            .build();
+        this.connectionPromise = this.startConnection();
+        this.attachListeners();
+    }
 
-		});
+    private async startConnection(): Promise<void> {
+        try {
+            await this._hubConnection.start();
+            console.log('SignalR Connection Established!');
+        } catch (err) {
+            console.error('SignalR Connection Error: ', err);
+        }
+    }
+    
+    private attachListeners(): void {
+        this._hubConnection.on('ChatRoomCreated', (newRoom: ChatRoom) => {
+            console.log('Broadcast received: New room created!', newRoom);
+            this.chatRooms.update(currentRooms => [...currentRooms, newRoom]);
+        });
+        
+    }
 
-		this._hubConnection.on('EditedMessage', (message: ChatMessage) => {
-		});
+    private async ensureConnection(): Promise<void> {
+        await this.connectionPromise;
+        if (this._hubConnection.state !== HubConnectionState.Connected) {
+             await this.startConnection();
+        }
+    }
 
-		this._hubConnection.on('DeletedMessage', (message: ChatMessage) => {
-		});
+    public async loadInitialChatRooms(): Promise<void> {
+        try {
+            await this.ensureConnection();
+            const rooms = await this._hubConnection.invoke<ChatRoom[]>('GetAllChatRooms');
+            this.chatRooms.set(rooms);
+            console.log('Initial chat rooms loaded:', rooms);
+        } catch (err) {
+            console.error('Failed to load initial chat rooms:', err);
+            console.log('Connection state at time of error:', this._hubConnection.state);
+        }
+    }
 
-		this._hubConnection.on('UserWriting', (user: ChatMessage) => {
-		});
-	}
+    public async createChatRoom(name: string): Promise<ChatRoom> {
+        await this.ensureConnection();
+        return await this._hubConnection.invoke<ChatRoom>('CreateChatRoomWithName', name);
+    }
+    public async getChatRoom(roomId: string): Promise<ChatRoom> {
+        await this.ensureConnection(); 
+        return await this._hubConnection.invoke<ChatRoom>('GetChatRoom', roomId);
+    }
 
-	/**
-	 * Get a chat room for the offer provided
-	 * @param roomId
-	 * @returns chatroom
-	 */
-	public async getChatRoom(roomId: string): Promise<ChatRoom> {
-		await this.getConnectionPromise;
+    public async joinChatRoom(roomId: string): Promise<ChatMessage[]> {
+        await this.ensureConnection(); 
+        return await this._hubConnection.invoke<ChatMessage[]>('JoinChatRoom', roomId);
+    }
 
-		return await this._hubConnection.invoke<ChatRoom>('GetChatRoom', roomId);
-	}
-
-	/**
-	 * Create a new chat room
-	 */
-	public async createChatRoom(): Promise<ChatRoom> {
-		await this.getConnectionPromise;
-
-		return await this._hubConnection.invoke<ChatRoom>('CreateChatRoom');
-	}
-
-	/**
-	 * Join the chat room and get all chat room message history
-	 */
-	public async joinChatRoom(roomId: string): Promise<void> {
-		await this.getConnectionPromise;
-
-		const chatHistory = await this._hubConnection.invoke<ChatMessage[]>('JoinChatRoom', roomId);
-	}
-
-	/**
-	 * Get all chat room messages
-	 */
-	public async leaveChatRoom(roomId: string): Promise<void> {
-		await this.getConnectionPromise;
-
-		await this._hubConnection.invoke('LeaveChatRoom', roomId);
-	}
-
-	/**
-	 * Send message to the chat room
-	 */
-	public async sendMessage(roomId: string, message: string): Promise<any> {
-		await this.getConnectionPromise;
-
-		await this._hubConnection.invoke('SendMessage', roomId, message);
-	}
+    public async leaveChatRoom(roomId: string): Promise<void> {
+        await this.ensureConnection(); 
+        await this._hubConnection.invoke('LeaveChatRoom', roomId);
+    }
+    
+    public async sendMessage(roomId: string, message: string): Promise<any> {
+        await this.ensureConnection(); 
+        await this._hubConnection.invoke('SendMessage', roomId, message);
+    }
 }

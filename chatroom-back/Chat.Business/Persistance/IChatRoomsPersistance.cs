@@ -9,4 +9,7 @@ public interface IChatRoomsPersistance
 {
     /// <summary>Crée une nouvelle chatroom et persiste les changements.</summary>
     Task<ChatRoom> CreateAsync(string name, CancellationToken ct = default);
+
+/// <summary>Gets all rooms</summary>
+    Task<IEnumerable<ChatRoom>> GetAllAsync(CancellationToken ct = default);
 }

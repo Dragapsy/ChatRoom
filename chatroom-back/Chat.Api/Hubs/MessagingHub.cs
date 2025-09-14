@@ -47,6 +47,17 @@ public sealed class MessagingHub : Hub<IMessagingHubPush>, IMessagingHubInvoke
     }
 
     /// <summary>
+    /// Récupère la liste complète de toutes les chatrooms existantes.
+    /// </summary>
+    /// <returns>Une collection de toutes les chatrooms.</returns>
+    public async Task<IEnumerable<ChatRoomDto>> GetAllChatRooms()
+    {
+        var roomsList = await _chatRoomsService.GetAllAsync(); 
+        
+        return _mapper.Map<IEnumerable<ChatRoomDto>>(roomsList);
+    }
+
+    /// <summary>
     /// Creates a new chat room with the given name and broadcasts the creation.
     /// </summary>
     public async Task<ChatRoomDto> CreateChatRoomWithName(string name)

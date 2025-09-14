@@ -71,4 +71,9 @@ public interface IMessagingHubInvoke
     /// </summary>
     /// <param name="name">The desired name for the new chatroom.</param>
     Task<ChatRoomDto> CreateChatRoomWithName(string name);
+
+    /// <summary>
+    /// Get all chat room
+    /// </summary>
+    Task<IEnumerable<ChatRoomDto>> GetAllChatRooms();
 }

@@ -35,5 +35,13 @@ namespace Chat.Business.Messaging
 
             return _repo.CreateAsync(trimmed, ct);
         }
+
+        /// <summary>
+        /// Récupère toutes les chatrooms.
+        /// </summary>
+        public Task<IEnumerable<ChatRoom>> GetAllAsync(CancellationToken ct = default)
+        {
+            return _repo.GetAllAsync(ct);
+        }
     }
 }

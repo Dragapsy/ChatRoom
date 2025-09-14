@@ -1,5 +1,6 @@
 using Chat.Business.Persistance;
 using Chat.Model.Messaging;
+using Microsoft.EntityFrameworkCore; 
 
 namespace Chat.Repository.Repositories
 {
@@ -23,6 +24,16 @@ namespace Chat.Repository.Repositories
             _db.ChatRooms.Add(room);
             await _db.SaveChangesAsync(ct);
             return room;
+        }
+
+        /// <summary>
+        /// Recupere tout les room <see cref="ChatRoomsRepository"/>.
+        /// </summary>
+        public async Task<IEnumerable<ChatRoom>> GetAllAsync(CancellationToken ct = default)
+        {
+            return await _db.ChatRooms
+                .AsNoTracking()
+                .ToListAsync(ct);
         }
     }
 }

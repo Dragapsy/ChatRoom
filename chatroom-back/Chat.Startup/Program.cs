@@ -134,6 +134,12 @@ public static class Program
         builder.Services.AddScoped<MessagingService>();
         builder.Services.AddScoped<IMessagingNotificationHandler, MessagingHubNotificationHandler>();
 
+        // le service de chatrooms
+        builder.Services.AddScoped<ChatRoomsService>();
+
+        // le repository de chatrooms
+        builder.Services.AddScoped<IChatRoomsPersistance, ChatRoomsRepository>();
+
         // Application respositories
         builder.Services.AddScoped<IMessagingPersistance, MessagingRepository>();
 
@@ -159,10 +165,12 @@ public static class Program
         });
 
         app.UseResponseCaching();
-
-        // Configure the HTTP request pipeline.
+        
         app.UseAppSwagger();
-        app.UseHttpsRedirection();
+        if (!app.Environment.IsDevelopment())
+        {
+            app.UseHttpsRedirection();
+        }
 
         ForwardedHeadersOptions forwardedHeadersOptions = new() { ForwardedHeaders = ForwardedHeaders.All };
 

@@ -9,8 +9,6 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace Chat.Api.Hubs;
 
-// TODO: Implement error handling via filters
-
 /// <summary>
 /// Represents the company messaging hub.
 /// </summary>
@@ -18,45 +16,61 @@ namespace Chat.Api.Hubs;
 public sealed class MessagingHub : Hub<IMessagingHubPush>, IMessagingHubInvoke
 {
     /// route to the hub
-    public static string HubPath => "api/hub/messaging";
+    public static string HubPath => "/api/hub/messaging";
 
     private readonly MessagingService _messagingService;
+    private readonly ChatRoomsService _chatRoomsService;   
     private readonly IMapper _mapper;
-
+    
     /// <summary>
     /// Initializes a new instance of the <see cref="MessagingHub"/> class.
     /// </summary>
-    public MessagingHub(MessagingService messagingService, IMapper mapper)
+    public MessagingHub(MessagingService messagingService, ChatRoomsService chatRoomsService, IMapper mapper)
     {
         _messagingService = messagingService;
+        _chatRoomsService = chatRoomsService;  
         _mapper = mapper;
     }
 
-    private string NameIdentifier => Context.User?.GetNameIdentifier() 
+    private string NameIdentifier => Context.User?.GetNameIdentifier()
         ?? throw new AuthenticationException("User nameidentifier not found in Claims.");
-    
+
     /// <summary>
     /// Gets the chat room from an offer.
     /// </summary>
     public async Task<ChatRoomDto> GetChatRoom(Guid roomId)
     {
-        Model.Messaging.ChatRoom room = await _messagingService.GetChatRoom(roomId)
-                                        ?? throw new ArgumentException("Offer not found");
+        var room = await _messagingService.GetChatRoom(roomId)
+                   ?? throw new ArgumentException("Chat room not found.");
 
         return _mapper.Map<ChatRoomDto>(room);
     }
-    
+
     /// <summary>
-    /// Gets the chat room from an offer.
+    /// Creates a new chat room with the given name and broadcasts the creation.
     /// </summary>
+    public async Task<ChatRoomDto> CreateChatRoomWithName(string name)
+    {
+        var room = await _chatRoomsService.CreateAsync(name);
+        var dto  = _mapper.Map<ChatRoomDto>(room);
+        await Clients.All.ChatRoomCreated(dto);
+        return dto;
+    }
+
+    /// <summary>
+    /// Crée une chatroom avec un nom par défaut lorsque aucun nom n’est fourni.
+    /// </summary>
+    /// <returns>La chatroom créée.</returns>
     public async Task<ChatRoomDto> CreateChatRoom()
     {
-        Model.Messaging.ChatRoom room = await _messagingService.CreateChatRoom(NameIdentifier)
-                                        ?? throw new ArgumentException("Offer not created");
-
-        return _mapper.Map<ChatRoomDto>(room);
+        // valeur par défaut
+        var room = await _chatRoomsService.CreateAsync("General");
+        var dto  = _mapper.Map<ChatRoomDto>(room);
+        await Clients.All.ChatRoomCreated(dto);
+        return dto;
     }
-    
+
+
     /// <inheritdoc />
     public async Task<IEnumerable<ChatMessageDto>> JoinChatRoom(Guid roomId)
     {

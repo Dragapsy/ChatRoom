@@ -24,6 +24,13 @@ public interface IMessagingHubPush
     /// </summary>
     /// <param name="id">The ID of the deleted message.</param>
     public Task DeletedMessage(Guid id);
+
+    /// <summary>
+    /// Notifie tous les clients qu’une nouvelle chatroom vient d’être créée.
+    /// </summary>
+    /// <param name="room">La chatroom créée (DTO transmis aux clients).</param>
+    Task ChatRoomCreated(Chat.ApiModel.Messaging.ChatRoomDto room);
+
 }
 
 /// <summary>
@@ -58,4 +65,15 @@ public interface IMessagingHubInvoke
     /// Create chat room
     /// </summary>
     Task<ChatRoomDto> CreateChatRoom();
+
+    /// <summary>
+    /// Create chat room with a specific name.
+    /// </summary>
+    /// <param name="name">The desired name for the new chatroom.</param>
+    Task<ChatRoomDto> CreateChatRoomWithName(string name);
+
+    /// <summary>
+    /// Get all chat room
+    /// </summary>
+    Task<IEnumerable<ChatRoomDto>> GetAllChatRooms();
 }

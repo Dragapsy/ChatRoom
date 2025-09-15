@@ -12,6 +12,9 @@ public sealed class ChatRoomDto
     /// </summary>
     public Guid Id { get; init; }
 
+    /// <summary>Nom lisible de la chatroom.</summary>
+    public string Name { get; set; } = "";
+
     /// <summary>
     /// Companies in the chat room
     /// </summary>

@@ -1,0 +1,22 @@
+<form class="create-form">
+  <input [formControl]="name" placeholder="Nom de la chatroom" />
+  
+  <button 
+    type="button" 
+    (click)="submit()" 
+    [disabled]="name.invalid || loading()">
+    Créer
+  </button>
+  </form>
+
+@if (room()) {
+  <div class="result ok">
+    ✔ Chatroom créée : <code>{{ room()?.id }}</code>
+  </div>
+}
+
+@if (error()) {
+  <div class="result error">
+    {{ error() }}
+  </div>
+}

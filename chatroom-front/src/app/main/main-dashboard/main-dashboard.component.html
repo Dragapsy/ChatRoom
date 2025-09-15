@@ -75,4 +75,30 @@
     </div>
 
   </div>
+
+  
+
+<button (click)="toggleChatWidget()" class="fab-chat" title="Ouvrir la messagerie">
+    <ng-icon name="saxMessageTextBulk" size="1.75rem"></ng-icon>
+</button>
+
+
+  @if (isChatWidgetOpen()) {
+    <div class="chat-widget">
+      <div class="widget-header">
+        <h3 class="widget-title">Messagerie</h3>
+        <div class="widget-actions">
+          <a [routerLink]="['/chat']" title="Agrandir" class="widget-action-button">
+              <ng-icon name="saxMaximize3Outline" size="1.25rem"></ng-icon>
+          </a>
+          <button (click)="toggleChatWidget()" title="Fermer" class="widget-action-button">
+              <ng-icon name="saxCloseCircleOutline" size="1.25rem"></ng-icon>
+          </button>
+        </div>
+      </div>
+      <div class="widget-body">
+        <app-chat></app-chat>
+      </div>
+    </div>
+  }
 }

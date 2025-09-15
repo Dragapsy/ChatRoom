@@ -15,6 +15,10 @@ public sealed class ChatRoom : ICreateTimestamp
     [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public Guid Id { get; init; }
 
+    /// <summary>Nom lisible de la chatroom.</summary>
+    [Required, MaxLength(128)]
+    public string Name { get; set; } = "";
+
     /// <summary>
     /// Companies in the chat room
     /// </summary>

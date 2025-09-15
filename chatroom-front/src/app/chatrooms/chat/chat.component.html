@@ -1,0 +1,30 @@
+<div class="flex flex-row gap-8">
+
+    <div class="rooms-list-container">
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">ChatRooms Disponibles</h3>
+
+        <ul class="rooms-list">
+            @for (room of chatRooms(); track room.id) {
+                <li 
+                    class="room-item" 
+                    (click)="selectRoom(room)"
+                    [class.selected]="room.id === selectedRoom()?.id">
+                    {{ room.name }}
+                </li>
+            } @empty {
+                <li class="room-item-empty">Aucun salon pour le moment...</li>
+            }
+        </ul>
+    </div>
+
+    <div class="chat-view-container">
+        @if (selectedRoom(); as room) {
+            <h2 class="text-2xl font-bold">{{ room.name }}</h2>
+            } @else {
+            <div class="no-room-selected">
+                <p>Sélectionnez un salon pour commencer à discuter.</p>
+            </div>
+        }
+    </div>
+
+</div>

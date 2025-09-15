@@ -15,6 +15,7 @@ import { CommonModule } from '@angular/common';
 import { ChatSvgIconComponent } from '../../_common/components/chat-svg-icon/chat-svg-icon.component';
 import { CreateComponent as ChatroomsCreateComponent } from 'src/app/chatrooms/create/create.component';
 import { MessagingService } from 'src/app/_common/services/messaging/messaging.service';
+import { ChatComponent } from 'src/app/chatrooms/chat/chat.component';
 
 
 @Component({
@@ -27,7 +28,8 @@ import { MessagingService } from 'src/app/_common/services/messaging/messaging.s
 		ChatButtonGroupComponent,
 		ChatButtonComponent,
 		ChatSvgIconComponent,
-		ChatroomsCreateComponent
+		ChatroomsCreateComponent,
+		ChatComponent
 	],
 	providers: [
 		provideIcons({

@@ -43,5 +43,19 @@ namespace Chat.Business.Messaging
         {
             return _repo.GetAllAsync(ct);
         }
+
+        /// <summary>
+        /// Récupère le nombres des  chatrooms.
+        /// </summary>
+        public Task<int> GetUserRoomsCountAsync(Guid userId, CancellationToken ct = default)
+        {
+            return _repo.GetUserRoomsCountAsync(userId, ct);
+        }
+
+        /// <summary>Adding participant</summary>
+        public Task AddParticipantAsync(Guid roomId, Guid userId, CancellationToken ct = default)
+        {
+            return _repo.AddParticipantAsync(roomId, userId, ct);
+        }
     }
 }

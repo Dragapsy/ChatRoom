@@ -6,6 +6,7 @@ using Chat.ApiModel.Messaging;
 using Chat.Business.Messaging;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Chat.Business.Persistance;
 
 namespace Chat.Api.Hubs;
 
@@ -21,16 +22,21 @@ public sealed class MessagingHub : Hub<IMessagingHubPush>, IMessagingHubInvoke
     private readonly MessagingService _messagingService;
     private readonly ChatRoomsService _chatRoomsService;   
     private readonly IMapper _mapper;
-    
+
+    private readonly IUserPersistance _userPersistance;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="MessagingHub"/> class.
     /// </summary>
-    public MessagingHub(MessagingService messagingService, ChatRoomsService chatRoomsService, IMapper mapper)
+    public MessagingHub(MessagingService messagingService, ChatRoomsService chatRoomsService, IMapper mapper, IUserPersistance userPersistance)
     {
         _messagingService = messagingService;
-        _chatRoomsService = chatRoomsService;  
+        _chatRoomsService = chatRoomsService;
         _mapper = mapper;
+        _userPersistance = userPersistance;
     }
+
+    private const int MaxJoinedRooms = 5;
 
     private string NameIdentifier => Context.User?.GetNameIdentifier()
         ?? throw new AuthenticationException("User nameidentifier not found in Claims.");
@@ -85,13 +91,28 @@ public sealed class MessagingHub : Hub<IMessagingHubPush>, IMessagingHubInvoke
     /// <inheritdoc />
     public async Task<IEnumerable<ChatMessageDto>> JoinChatRoom(Guid roomId)
     {
+        var nameIdentifier = NameIdentifier;
+
+        var user = await _userPersistance.GetUserByUsernameAsync(nameIdentifier)
+            ?? throw new HubException("Utilisateur non trouvé.");
+        
+        var userIdAsGuid = user.Id;
+        
+        var userRoomCount = await _chatRoomsService.GetUserRoomsCountAsync(userIdAsGuid);
+        
+        if (userRoomCount >= MaxJoinedRooms)
+        {
+            throw new HubException($"Limite atteinte. Vous ne pouvez pas rejoindre plus de {MaxJoinedRooms} salons.");
+        }
+        
         if (await _messagingService.GetChatRoomAsync(roomId, Context.ConnectionAborted) is not { } room)
             throw new KeyNotFoundException("Chatroom not found.");
+
+        await _chatRoomsService.AddParticipantAsync(roomId, userIdAsGuid);
 
         await Groups.AddToGroupAsync(Context.ConnectionId, roomId.ToString());
 
         var messages = _messagingService.GetMessagesInRoom(roomId);
-
         return messages.Adapt<IEnumerable<ChatMessageDto>>(_mapper.Config);
     }
 

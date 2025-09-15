@@ -76,23 +76,29 @@
 
   </div>
 
-  <button class="fab-create" type="button" title="Créer une chatroom" (click)="showCreateModal.set(true)">+</button>
+  
 
-  @if (showCreateModal()) {
-    <div class="modal-backdrop" (click)="showCreateModal.set(false)"></div>
-    <div class="modal">
-      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="createRoomTitle">
-        <button class="modal-close" type="button" (click)="showCreateModal.set(false)">✕</button>
-        <h3 id="createRoomTitle" class="modal-title">Créer une chatroom</h3>
+<button (click)="toggleChatWidget()" class="fab-chat" title="Ouvrir la messagerie">
+    <ng-icon name="saxMessageTextBulk" size="1.75rem"></ng-icon>
+</button>
 
-        <app-chatrooms-create (created)="showCreateModal.set(false)"></app-chatrooms-create>
+
+  @if (isChatWidgetOpen()) {
+    <div class="chat-widget">
+      <div class="widget-header">
+        <h3 class="widget-title">Messagerie</h3>
+        <div class="widget-actions">
+          <a [routerLink]="['/chat']" title="Agrandir" class="widget-action-button">
+              <ng-icon name="saxMaximize3Outline" size="1.25rem"></ng-icon>
+          </a>
+          <button (click)="toggleChatWidget()" title="Fermer" class="widget-action-button">
+              <ng-icon name="saxCloseCircleOutline" size="1.25rem"></ng-icon>
+          </button>
+        </div>
+      </div>
+      <div class="widget-body">
+        <app-chat></app-chat>
       </div>
     </div>
-}
-
-<div class="mt-8">
-    <app-chat></app-chat>
-</div>
-
-
+  }
 }

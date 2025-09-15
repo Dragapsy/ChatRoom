@@ -10,6 +10,10 @@ import { HubConnection, HubConnectionBuilder, HubConnectionState, LogLevel } fro
 export class MessagingService {
 
     public chatRooms = signal<ChatRoom[]>([]);
+
+    public messages = signal<ChatMessage[]>([]);
+
+    public activeRoomId = signal<string | null>(null);
     
     private _hubConnection: HubConnection;
     private connectionPromise: Promise<void>;
@@ -37,6 +41,13 @@ export class MessagingService {
         this._hubConnection.on('ChatRoomCreated', (newRoom: ChatRoom) => {
             console.log('Broadcast received: New room created!', newRoom);
             this.chatRooms.update(currentRooms => [...currentRooms, newRoom]);
+        });
+
+        this._hubConnection.on('NewMessage', (newMessage: ChatMessage) => {
+            console.log('New message received:', newMessage);
+            if (newMessage.roomId === this.activeRoomId()) {
+                this.messages.update(currentMessages => [...currentMessages, newMessage]);
+            }
         });
         
     }
@@ -69,9 +80,18 @@ export class MessagingService {
         return await this._hubConnection.invoke<ChatRoom>('GetChatRoom', roomId);
     }
 
-    public async joinChatRoom(roomId: string): Promise<ChatMessage[]> {
+    public async joinChatRoom(roomId: string): Promise<void> {
         await this.ensureConnection(); 
-        return await this._hubConnection.invoke<ChatMessage[]>('JoinChatRoom', roomId);
+         const oldRoomId = this.activeRoomId();
+        if (oldRoomId) {
+            await this._hubConnection.invoke('LeaveChatRoom', oldRoomId);
+        }
+        const history = await this._hubConnection.invoke<ChatMessage[]>('JoinChatRoom', roomId);
+        
+        this.activeRoomId.set(roomId);
+        this.messages.set(history);
+        console.log(`Joined room ${roomId} and loaded history:`, history);
+    
     }
 
     public async leaveChatRoom(roomId: string): Promise<void> {

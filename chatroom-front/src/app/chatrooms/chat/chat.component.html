@@ -1,8 +1,17 @@
-<div class="flex flex-row gap-8">
+<div class="chat-layout">
 
     <div class="rooms-list-container">
-        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">ChatRooms Disponibles</h3>
+        <div class="rooms-list-header">
+            <h3 class="text-xl font-semibold">Salons</h3>
+            <button (click)="openCreateModal()" title="Créer un salon" class="create-room-button">+</button>
+        </div>
 
+        @if (roomError()) {
+        <div class="room-error">
+            {{ roomError() }}
+        </div>
+    }
+        
         <ul class="rooms-list">
             @for (room of chatRooms(); track room.id) {
                 <li 
@@ -12,19 +21,41 @@
                     {{ room.name }}
                 </li>
             } @empty {
-                <li class="room-item-empty">Aucun salon pour le moment...</li>
+                <li class="room-item-empty">Créez le premier salon !</li>
             }
         </ul>
     </div>
 
     <div class="chat-view-container">
         @if (selectedRoom(); as room) {
-            <h2 class="text-2xl font-bold">{{ room.name }}</h2>
-            } @else {
+            <ul class="message-list">
+                @for (msg of messages(); track msg.id) {
+                    <li class="message-item">
+                        <div class="message-author">{{ msg.authorFullName }}</div>
+                        <div class="message-content">{{ msg.content }}</div>
+                    </li>
+                } @empty {
+                    <li class="message-item-empty">Soyez le premier à envoyer un message !</li>
+                }
+            </ul>
+            
+            <div class="message-input-area">
+                </div>
+        } @else {
             <div class="no-room-selected">
                 <p>Sélectionnez un salon pour commencer à discuter.</p>
             </div>
         }
     </div>
-
 </div>
+
+@if (showCreateModal()) {
+  <div class="modal-backdrop" (click)="onRoomCreated()"></div>
+  <div class="modal">
+    <div class="modal-card">
+      <button class="modal-close" type="button" (click)="onRoomCreated()">✕</button>
+      <h3 class="modal-title">Créer une chatroom</h3>
+      <app-chatrooms-create (created)="onRoomCreated()"></app-chatrooms-create>
+    </div>
+  </div>
+}

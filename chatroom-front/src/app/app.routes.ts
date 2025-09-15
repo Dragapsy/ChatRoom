@@ -39,6 +39,12 @@ export const routes: Routes = [
 					import('./chatrooms/create/create.component').then(m => m.CreateComponent),
 			},
 			{
+                path: 'chat',
+                canActivate: [isAuthenticatedGuard],
+                loadComponent: () =>
+                    import('./chatrooms/chat-page/chat-page.component').then(m => m.ChatPageComponent),
+            },
+			{
 				path: SITEMAP.account.path,
 				canActivate: [isAuthenticatedGuard],
 				component: MainAccountComponent,

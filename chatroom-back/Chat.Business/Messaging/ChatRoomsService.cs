@@ -57,5 +57,27 @@ namespace Chat.Business.Messaging
         {
             return _repo.AddParticipantAsync(roomId, userId, ct);
         }
+
+        /// <summary>
+        /// Récupère l'historique des messages d'un salon.
+        /// </summary>
+        /// <param name="roomId">L'ID du salon.</param>
+        /// <param name="ct">Le jeton d'annulation.</param>
+        /// <returns>Une collection de messages du salon.</returns>
+        public Task<IEnumerable<ChatMessage>> GetMessageHistoryAsync(Guid roomId, CancellationToken ct = default)
+        {
+            return _repo.GetMessageHistoryAsync(roomId, ct);
+        }
+
+        /// <summary>
+        /// Récupère un salon de discussion spécifique par son ID.
+        /// </summary>
+        /// <param name="roomId">L'ID du salon.</param>
+        /// <param name="ct">Le jeton d'annulation.</param>
+        /// <returns>Le salon de discussion avec ses participants, ou null s'il n'est pas trouvé.</returns>
+        public Task<ChatRoom?> GetChatRoomAsync(Guid roomId, CancellationToken ct = default)
+        {
+            return _repo.GetChatRoomAsync(roomId, ct);
+        }
     }
 }

@@ -50,7 +50,7 @@ public interface IMessagingHubInvoke
     /// </summary>
     /// <param name="roomId"></param>
     public Task LeaveChatRoom(Guid roomId);
-    
+
     /// <summary>
     /// Submits a new message to the chatroom.
     /// </summary>
@@ -76,4 +76,11 @@ public interface IMessagingHubInvoke
     /// Get all chat room
     /// </summary>
     Task<IEnumerable<ChatRoomDto>> GetAllChatRooms();
+    
+    /// <summary>
+    /// Récupère l'historique des messages pour un salon de discussion spécifique.
+    /// </summary>
+    /// <param name="roomId">L'ID du salon.</param>
+    /// <returns>L'historique des messages du salon.</returns>
+    Task<IEnumerable<ChatMessageDto>> GetMessageHistory(Guid roomId);
 }

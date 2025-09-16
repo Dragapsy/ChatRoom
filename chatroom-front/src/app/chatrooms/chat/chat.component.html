@@ -5,13 +5,11 @@
             @if (!isSidebarCollapsed()) {
                 <h3 class="text-xl font-semibold">Salons</h3>
             }
-
             @if (isSidebarCollapsed()) {
                 <button (click)="expandSidebar()" title="Afficher les salons" class="sidebar-toggle-button">
                     <ng-icon name="saxMenuBulk" size="1.5rem"></ng-icon>
                 </button>
             }
-
             <button (click)="openCreateModal()" title="Créer un salon" class="create-room-button">+</button>
         </div>
         
@@ -20,11 +18,9 @@
                 <button [class.active]="activeView() === 'joined'" (click)="activeView.set('joined')">Mes Salons</button>
                 <button [class.active]="activeView() === 'all'" (click)="activeView.set('all')">Découvrir</button>
             </div>
-
             @if (roomError()) {
                 <div class="room-error">{{ roomError() }}</div>
             }
-
             @switch (activeView()) {
                 @case ('joined') {
                     <ul class="rooms-list">
@@ -52,39 +48,61 @@
         }
     </div>
 
-    <div class="chat-view-container">
+    <div class="main-view-wrapper">
+
+        <div class="chat-view-container">
+            @if (selectedRoom(); as room) {
+                <div class="chat-header">
+                    <h2 class="text-2xl font-bold">{{ room.name }}</h2>
+                    <button (click)="toggleParticipants()" class="participants-toggle-button" title="Voir les participants">
+                        <ng-icon name="saxPeopleBulk" size="1.5rem"></ng-icon>
+                    </button>
+                </div>
+                
+                <ul class="message-list">
+                    @for (msg of messages(); track msg.id) {
+                        <li class="message-item">
+                            <div class="message-author">{{ getAuthorName(msg.authorId) }}</div>
+                            <div class="message-content">{{ msg.content }}</div>
+                        </li>
+                    } @empty {
+                        <li class="message-item-empty">Soyez le premier à envoyer un message !</li>
+                    }
+                </ul>
+                
+                <div class="message-input-area"></div>
+
+            } @else {
+                <div class="no-room-selected">
+                    <p>Sélectionnez un salon pour commencer à discuter.</p>
+                </div>
+            }
+        </div>
+
         @if (selectedRoom(); as room) {
-            <div class="chat-header">
-                <h2 class="text-2xl font-bold">{{ room.name }}</h2>
-            </div>
-            
-            <ul class="message-list">
-                @for (msg of messages(); track msg.id) {
-                    <li class="message-item">
-                        <div class="message-author">{{ getAuthorName(msg.authorId) }}</div>
-                        <div class="message-content">{{ msg.content }}</div>
-                    </li>
-                } @empty {
-                    <li class="message-item-empty">Soyez le premier à envoyer un message !</li>
-                }
-            </ul>
-            
-            <div class="message-input-area"></div>
-        } @else {
-            <div class="no-room-selected">
-                <p>Sélectionnez un salon pour commencer à discuter.</p>
+            <div class="participants-list-container" [class.visible]="showParticipants()">
+                <div class="participants-header">
+                    <h3 class="participants-title">Participants ({{ room.participants.length }})</h3>
+                    <button (click)="toggleParticipants()" class="close-participants-button" title="Fermer">✕</button>
+                </div>
+                <ul class="participants-list">
+                    @for (participant of room.participants; track participant.id) {
+                        <li class="participant-item">
+                            <span>{{ participant.firstName }} {{ participant.lastName }}</span>
+                        </li>
+                    }
+                </ul>
             </div>
         }
-    </div>
-</div>
+    </div> </div>
 
 @if (showCreateModal()) {
-  <div class="modal-backdrop" (click)="onRoomCreated()"></div>
-  <div class="modal">
-    <div class="modal-card">
-      <button class="modal-close" type="button" (click)="onRoomCreated()">✕</button>
-      <h3 class="modal-title">Créer une chatroom</h3>
-      <app-chatrooms-create (created)="onRoomCreated()"></app-chatrooms-create>
+    <div class="modal-backdrop" (click)="onRoomCreated()"></div>
+    <div class="modal">
+        <div class="modal-card">
+            <button class="modal-close" type="button" (click)="onRoomCreated()">✕</button>
+            <h3 class="modal-title">Créer une chatroom</h3>
+            <app-chatrooms-create (created)="onRoomCreated()"></app-chatrooms-create>
+        </div>
     </div>
-  </div>
 }

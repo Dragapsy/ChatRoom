@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { saxAddSquareBulk, saxMenuBulk } from '@ng-icons/iconsax/bulk';
+import { saxAddSquareBulk, saxMenuBulk, saxPeopleBulk } from '@ng-icons/iconsax/bulk';
 import { MessagingService } from 'src/app/_common/services/messaging/messaging.service';
 import { ChatRoom } from 'src/app/_common/models/chat-room.model';
 import { CreateComponent as ChatroomsCreateComponent } from '../create/create.component';
@@ -10,7 +10,7 @@ import { CreateComponent as ChatroomsCreateComponent } from '../create/create.co
   selector: 'app-chat',
   standalone: true,
   imports: [CommonModule, ChatroomsCreateComponent, NgIconComponent],
-  providers: [provideIcons({ saxAddSquareBulk, saxMenuBulk }) ],
+  providers: [provideIcons({ saxAddSquareBulk, saxMenuBulk, saxPeopleBulk  }) ],
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.scss']
 })
@@ -28,6 +28,8 @@ export class ChatComponent implements OnInit {
   public activeView = signal<'joined' | 'all'>('joined');
 
   public isSidebarCollapsed = signal(false);
+
+  public showParticipants = signal(false);
 
   constructor() { }
 
@@ -77,6 +79,10 @@ export class ChatComponent implements OnInit {
 
   expandSidebar(): void {
     this.isSidebarCollapsed.set(false);
+  }
+
+  toggleParticipants(): void {
+    this.showParticipants.update(currentValue => !currentValue);
   }
 
   openCreateModal(): void { this.showCreateModal.set(true); }

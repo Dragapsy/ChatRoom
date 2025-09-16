@@ -39,12 +39,6 @@ public sealed class MessagingService
         await _messagingPersistance.GetMessages(roomId, ct);
 
     /// <summary>
-    /// Gets all chat rooms.
-    /// </summary>
-    /// <returns>All chat rooms.</returns>
-    public IQueryable<Model.Messaging.ChatRoom> GetRooms() => _messagingPersistance.GetRooms();
-
-    /// <summary>
     /// Gets all messages in a chat room.
     /// </summary>
     /// <param name="roomId">ID of the chat room.</param>
@@ -88,46 +82,6 @@ public sealed class MessagingService
                     ?? throw new ArgumentException($"User {nameIdentifier} not found");
         return user;
     }
-
-    /// <summary>
-    /// create chat room for an offer.
-    /// </summary>
-    /// <returns>The chat room.</returns>
-    public async Task<ChatRoom?> GetChatRoom(Guid roomId,
-        CancellationToken ct = default)
-    {
-        ChatRoom? chatRoom = await _messagingPersistance.GetChatRoomAsync(roomId, ct);
-
-        return chatRoom;
-    }
-    
-    /// <summary>
-    /// create chat room for an offer.
-    /// </summary>
-    /// <returns>The chat room.</returns>
-    public async Task<Model.Messaging.ChatRoom?> CreateChatRoom( string nameIdentifier,
-        CancellationToken ct = default)
-    {
-        User user = await GetUserFromNameIdentifier(nameIdentifier);
-
-        // using a HashSet to avoid duplicates if userCompany is importer or exporter
-        HashSet<User> participants = [user];
-        
-        ChatRoom chatRoom = new Model.Messaging.ChatRoom
-        {
-            Participants = participants.ToList()
-        };
-
-        return await _messagingPersistance.CreateRoomAsync(chatRoom, ct);
-    }
-    
-    
-    /// <summary>
-    /// Gets a specific chat room.
-    /// </summary>
-    /// <returns>The chat room.</returns>
-    public async Task<Model.Messaging.ChatRoom?> GetChatRoomAsync(Guid roomId, CancellationToken ct = default)
-        => await _messagingPersistance.GetChatRoomAsync(roomId, ct);
         
     /// <summary>
     /// Gets a specific chat message.

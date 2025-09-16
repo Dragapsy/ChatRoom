@@ -1,4 +1,5 @@
 using Chat.ApiModel.Messaging;
+using ChatRoom.ApiModel;
 
 namespace Chat.Api.Hubs;
 
@@ -12,13 +13,13 @@ public interface IMessagingHubPush
     /// </summary>
     /// <param name="message">The message to push.</param>
     public Task NewMessage(ChatMessageDto message);
-    
+
     /// <summary>
     /// Pushes an edited message to the client.
     /// </summary>
     /// <param name="message">The edited message to push.</param>
     public Task EditedMessage(ChatMessageDto message);
-    
+
     /// <summary>
     /// Pushes a deleted message to the client.
     /// </summary>
@@ -30,6 +31,16 @@ public interface IMessagingHubPush
     /// </summary>
     /// <param name="room">La chatroom créée (DTO transmis aux clients).</param>
     Task ChatRoomCreated(Chat.ApiModel.Messaging.ChatRoomDto room);
+    
+    /// <summary>
+    /// Notifie les membres d'un salon qu'un nouvel utilisateur a rejoint.
+    /// </summary>
+    Task UserJoined(Guid roomId, UserDto newUser);
+
+    /// <summary>
+    /// Notifie les membres d'un salon qu'un utilisateur est parti.
+    /// </summary>
+    Task UserLeft(Guid roomId, Guid userId);
 
 }
 
@@ -76,11 +87,12 @@ public interface IMessagingHubInvoke
     /// Get all chat room
     /// </summary>
     Task<IEnumerable<ChatRoomDto>> GetAllChatRooms();
-    
+
     /// <summary>
     /// Récupère l'historique des messages pour un salon de discussion spécifique.
     /// </summary>
     /// <param name="roomId">L'ID du salon.</param>
     /// <returns>L'historique des messages du salon.</returns>
     Task<IEnumerable<ChatMessageDto>> GetMessageHistory(Guid roomId);
+
 }

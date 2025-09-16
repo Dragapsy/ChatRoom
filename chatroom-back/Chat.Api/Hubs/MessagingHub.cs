@@ -3,11 +3,12 @@ using Mapster;
 using MapsterMapper;
 using Chat.Api.Infrastructure.Authentication;
 using Chat.ApiModel.Messaging;
+using Chat.ApiModel;
 using Chat.Business.Messaging;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Chat.Business.Persistance;
-
+using ChatRoom.ApiModel;
 namespace Chat.Api.Hubs;
 
 /// <summary>
@@ -22,7 +23,6 @@ public sealed class MessagingHub : Hub<IMessagingHubPush>, IMessagingHubInvoke
     private readonly MessagingService _messagingService;
     private readonly ChatRoomsService _chatRoomsService;
     private readonly IMapper _mapper;
-
     private readonly IUserPersistance _userPersistance;
 
     /// <summary>
@@ -46,8 +46,8 @@ public sealed class MessagingHub : Hub<IMessagingHubPush>, IMessagingHubInvoke
     /// </summary>
     public async Task<ChatRoomDto> GetChatRoom(Guid roomId)
     {
-        var room = await _messagingService.GetChatRoom(roomId)
-                   ?? throw new ArgumentException("Chat room not found.");
+        var room = await _chatRoomsService.GetChatRoomAsync(roomId, Context.ConnectionAborted)
+                    ?? throw new HubException("Salon non trouvé.");
 
         return _mapper.Map<ChatRoomDto>(room);
     }
@@ -80,14 +80,12 @@ public sealed class MessagingHub : Hub<IMessagingHubPush>, IMessagingHubInvoke
     /// <returns>La chatroom créée.</returns>
     public async Task<ChatRoomDto> CreateChatRoom()
     {
-        // valeur par défaut
         var room = await _chatRoomsService.CreateAsync("General");
         var dto = _mapper.Map<ChatRoomDto>(room);
         await Clients.All.ChatRoomCreated(dto);
         return dto;
     }
-
-
+    
     /// <inheritdoc />
     public async Task<IEnumerable<ChatMessageDto>> JoinChatRoom(Guid roomId)
     {
@@ -105,12 +103,15 @@ public sealed class MessagingHub : Hub<IMessagingHubPush>, IMessagingHubInvoke
             throw new HubException($"Limite atteinte. Vous ne pouvez pas rejoindre plus de {MaxJoinedRooms} salons.");
         }
 
-        if (await _messagingService.GetChatRoomAsync(roomId, Context.ConnectionAborted) is not { } room)
+        if (await _chatRoomsService.GetChatRoomAsync(roomId, Context.ConnectionAborted) is not { } room)
             throw new KeyNotFoundException("Chatroom not found.");
 
         await _chatRoomsService.AddParticipantAsync(roomId, userIdAsGuid);
 
         await Groups.AddToGroupAsync(Context.ConnectionId, roomId.ToString());
+
+        var userDto = _mapper.Map<UserDto>(user);
+        await Clients.Group(roomId.ToString()).UserJoined(roomId, userDto);
 
         var messages = _messagingService.GetMessagesInRoom(roomId);
         return messages.Adapt<IEnumerable<ChatMessageDto>>(_mapper.Config);
@@ -119,7 +120,13 @@ public sealed class MessagingHub : Hub<IMessagingHubPush>, IMessagingHubInvoke
     /// <inheritdoc />
     public async Task LeaveChatRoom(Guid roomId)
     {
+        var nameIdentifier = NameIdentifier;
+        var user = await _userPersistance.GetUserByUsernameAsync(nameIdentifier)
+                       ?? throw new HubException("Utilisateur non trouvé.");
+                       
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId.ToString());
+        
+        await Clients.Group(roomId.ToString()).UserLeft(roomId, user.Id);
     }
 
     /// <inheritdoc />
@@ -127,7 +134,7 @@ public sealed class MessagingHub : Hub<IMessagingHubPush>, IMessagingHubInvoke
     {
         await _messagingService.SubmitMessageAsync(roomId, message, NameIdentifier);
     }
-    
+
     /// <summary>
     /// Récupère l'historique des messages pour un salon de discussion spécifique.
     /// </summary>
@@ -137,7 +144,7 @@ public sealed class MessagingHub : Hub<IMessagingHubPush>, IMessagingHubInvoke
     public async Task<IEnumerable<ChatMessageDto>> GetMessageHistory(Guid roomId)
     {
         var nameIdentifier = NameIdentifier;
-        var user = await _userPersistance.GetUserByUsernameAsync(nameIdentifier) 
+        var user = await _userPersistance.GetUserByUsernameAsync(nameIdentifier)
             ?? throw new HubException("Utilisateur non trouvé.");
         
         var room = await _chatRoomsService.GetChatRoomAsync(roomId, Context.ConnectionAborted)

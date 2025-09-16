@@ -32,6 +32,7 @@ namespace Chat.Repository.Repositories
         public async Task<IEnumerable<ChatRoom>> GetAllAsync(CancellationToken ct = default)
         {
             return await _db.ChatRooms
+                .Include(room => room.Participants)
                 .AsNoTracking()
                 .ToListAsync(ct);
         }

@@ -14,6 +14,8 @@ export class MessagingService {
     public messages = signal<ChatMessage[]>([]);
 
     public activeRoomId = signal<string | null>(null);
+
+    public joinedRooms = signal<ChatRoom[]>([]);
     
     private _hubConnection: HubConnection;
     private connectionPromise: Promise<void>;
@@ -80,18 +82,26 @@ export class MessagingService {
         return await this._hubConnection.invoke<ChatRoom>('GetChatRoom', roomId);
     }
 
-    public async joinChatRoom(roomId: string): Promise<void> {
+    public async joinChatRoom(room: ChatRoom): Promise<void> {
+        if (this.joinedRooms().some(r => r.id === room.id)) {
+            await this.switchActiveRoom(room.id);
+            return;
+        }
+
         await this.ensureConnection(); 
-         const oldRoomId = this.activeRoomId();
+        
+        const oldRoomId = this.activeRoomId();
         if (oldRoomId) {
             await this._hubConnection.invoke('LeaveChatRoom', oldRoomId);
         }
-        const history = await this._hubConnection.invoke<ChatMessage[]>('JoinChatRoom', roomId);
+
+        const history = await this._hubConnection.invoke<ChatMessage[]>('JoinChatRoom', room.id);
+
+        this.joinedRooms.update(currentRooms => [...currentRooms, room]);
         
-        this.activeRoomId.set(roomId);
+        this.activeRoomId.set(room.id);
+
         this.messages.set(history);
-        console.log(`Joined room ${roomId} and loaded history:`, history);
-    
     }
 
     public async leaveChatRoom(roomId: string): Promise<void> {
@@ -102,5 +112,17 @@ export class MessagingService {
     public async sendMessage(roomId: string, message: string): Promise<any> {
         await this.ensureConnection(); 
         await this._hubConnection.invoke('SendMessage', roomId, message);
+    }
+
+    public async switchActiveRoom(roomId: string): Promise<void> {
+        if (this.activeRoomId() === roomId) return;
+
+        await this.ensureConnection();
+        const history = await this._hubConnection.invoke<ChatMessage[]>('GetMessageHistory', roomId); 
+
+        console.log(`Historique reçu pour le salon ${roomId}:`, history);
+
+        this.activeRoomId.set(roomId);
+        this.messages.set(history);
     }
 }

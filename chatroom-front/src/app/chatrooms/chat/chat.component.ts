@@ -34,7 +34,12 @@ export class ChatComponent implements OnInit {
     this.roomError.set(null);
 
     if (this.selectedRoom()?.id === room.id) {
-      return;
+      
+      console.log('Leaving room (toggle):', room.name);
+      await this.messagingService.leaveChatRoom(room.id);
+      this.selectedRoom.set(null);
+      this.messages.set([]);
+      return; 
     }
     
     try {

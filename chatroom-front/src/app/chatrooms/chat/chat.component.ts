@@ -1,26 +1,31 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { saxAddSquareBulk, saxMenuBulk, saxPeopleBulk } from '@ng-icons/iconsax/bulk';
+import { saxAddSquareBulk, saxMenuBulk, saxPeopleBulk  } from '@ng-icons/iconsax/bulk';
+
 import { MessagingService } from 'src/app/_common/services/messaging/messaging.service';
 import { ChatRoom } from 'src/app/_common/models/chat-room.model';
 import { CreateComponent as ChatroomsCreateComponent } from '../create/create.component';
+import { Subscription } from 'rxjs';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { tablerSend } from '@ng-icons/tabler-icons';
+
 
 @Component({
   selector: 'app-chat',
   standalone: true,
-  imports: [CommonModule, ChatroomsCreateComponent, NgIconComponent],
-  providers: [provideIcons({ saxAddSquareBulk, saxMenuBulk, saxPeopleBulk  }) ],
+  imports: [CommonModule, ChatroomsCreateComponent, NgIconComponent, ReactiveFormsModule ],
+  providers: [provideIcons({ saxAddSquareBulk, saxMenuBulk, saxPeopleBulk, tablerSend  }) ],
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.scss']
 })
-export class ChatComponent implements OnInit {
+export class ChatComponent implements OnInit, OnDestroy  {
   private readonly messagingService = inject(MessagingService);
 
   public allRooms = this.messagingService.chatRooms;
   public joinedRooms = this.messagingService.joinedRooms;
   public messages = this.messagingService.messages;
-  
+  private readonly fb = inject(FormBuilder);
   public selectedRoom = signal<ChatRoom | null>(null);
 
   public showCreateModal = signal(false);
@@ -31,10 +36,27 @@ export class ChatComponent implements OnInit {
 
   public showParticipants = signal(false);
 
-  constructor() { }
+  public activityNotification = signal<string | null>(null);
+  private activitySubscription: Subscription | undefined;
+  private activityTimeout: any;
+
+  public messageForm: FormGroup;
+
+  constructor() { 
+    this.messageForm = this.fb.group({
+      content: ['', Validators.required]
+    });
+  }
 
   ngOnInit(): void {
     this.messagingService.loadInitialChatRooms();
+    this.activitySubscription = this.messagingService.userActivity$.subscribe(message => {
+        this.activityNotification.set(message);
+        clearTimeout(this.activityTimeout);
+        this.activityTimeout = setTimeout(() => {
+            this.activityNotification.set(null);
+        }, 3000);
+    });
   }
 
   async joinNewRoom(room: ChatRoom): Promise<void> {
@@ -53,6 +75,7 @@ export class ChatComponent implements OnInit {
     this.roomError.set(null);
     await this.messagingService.switchActiveRoom(room.id);
     this.selectedRoom.set(room); 
+    this.selectedRoom.set(room);
     this.isSidebarCollapsed.set(true);
   }
 
@@ -87,4 +110,29 @@ export class ChatComponent implements OnInit {
 
   openCreateModal(): void { this.showCreateModal.set(true); }
   onRoomCreated(): void { this.showCreateModal.set(false); }
+
+  ngOnDestroy(): void {
+      if (this.activitySubscription) {
+          this.activitySubscription.unsubscribe();
+      }
+      clearTimeout(this.activityTimeout);
+  }
+
+  async sendMessage(): Promise<void> {
+    if (this.messageForm.invalid) return;
+
+    const selectedRoom = this.selectedRoom();
+    if (!selectedRoom) return;
+
+    const content = this.messageForm.value.content.trim();
+    if (!content) return;
+    
+    try {
+      await this.messagingService.sendMessage(selectedRoom.id, content);
+      this.messageForm.reset();
+    } catch (e) {
+      console.error("Failed to send message:", e);
+      this.roomError.set("L'envoi du message a échoué.");
+    }
+  }
 }

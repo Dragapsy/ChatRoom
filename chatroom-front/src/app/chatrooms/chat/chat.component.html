@@ -49,7 +49,6 @@
     </div>
 
     <div class="main-view-wrapper">
-
         <div class="chat-view-container">
             @if (selectedRoom(); as room) {
                 <div class="chat-header">
@@ -70,8 +69,19 @@
                     }
                 </ul>
                 
-                <div class="message-input-area"></div>
-
+                <div class="message-input-area">
+                    @if(activityNotification(); as notification) {
+                        <div class="activity-notification">
+                            {{ notification }}
+                        </div>
+                    }
+                    <form [formGroup]="messageForm" (ngSubmit)="sendMessage()">
+                        <input formControlName="content" type="text" placeholder="Écrivez votre message..." class="message-input">
+                        <button type="submit" [disabled]="messageForm.invalid" class="send-button">
+                            <ng-icon name="tablerSend" size="1.5rem"></ng-icon>
+                        </button>
+                    </form>
+                </div>
             } @else {
                 <div class="no-room-selected">
                     <p>Sélectionnez un salon pour commencer à discuter.</p>
@@ -94,7 +104,8 @@
                 </ul>
             </div>
         }
-    </div> </div>
+    </div>
+</div>
 
 @if (showCreateModal()) {
     <div class="modal-backdrop" (click)="onRoomCreated()"></div>

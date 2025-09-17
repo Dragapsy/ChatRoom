@@ -1,7 +1,7 @@
 .chat-layout {
   display: flex;
   flex-direction: row;
-  height: 70vh;
+  height: 100%;
   width: 100%;
 }
 
@@ -144,13 +144,13 @@
   text-align: center;
 }
 
-
 .chat-view-container {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
   height: 100%;
-  width: 100%;
+  overflow: hidden;
+  flex-shrink: 0; 
 }
 
 .chat-header {
@@ -226,12 +226,92 @@
   font-size: 1.1rem;
 }
 
+.message-input-area {
+  position: relative;
+  padding: 1rem;
+  border-top: 1px solid #e5e7eb;
+  flex-shrink: 0;
+  :is(.dark) & { border-color: #374151; }
+
+  form {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+  }
+}
+
+.message-input {
+  flex-grow: 1;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.6rem 0.9rem;
+  font-size: 1rem;
+  outline: none;
+  min-width: 0;
+  
+  &:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px #bfdbfe;
+  }
+  
+  :is(.dark) & { 
+    background-color: #374151;
+    border-color: #4b5563;
+    color: #f9fafb;
+    &:focus { border-color: #60a5fa; box-shadow: 0 0 0 2px #3b82f660; }
+  }
+}
+
+.send-button {
+  width: 2.75rem;
+  height: 2.75rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: none;
+  background-color: #3b82f6;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: #2563eb;
+  }
+
+  &:disabled {
+    background-color: #9ca3af;
+    cursor: not-allowed;
+  }
+}
+
+.activity-notification {
+  position: absolute;
+  bottom: 100%;
+  left: 1rem;
+  font-size: 0.8rem;
+  color: #6b7280;
+  padding: 0.25rem 0.5rem;
+  margin-bottom: 0.25rem;
+  animation: fadeIn 0.3s ease-out;
+  pointer-events: none;  
+
+  :is(.dark) & {
+    color: #9ca3af;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 
 .participants-list-container {
   width: 260px;
   height: 100%;
   border-left: 1px solid #e5e7eb;
-  
   position: absolute;
   top: 0;
   right: 0;
@@ -359,4 +439,10 @@
   font-size: 0.9rem;
   font-weight: 500;
   border: 1px solid #fecaca;
+}
+
+.empty-state-icon {
+  margin-bottom: 1rem;
+  color: #d1d5db;
+  :is(.dark) & { color: #4b5563; }
 }

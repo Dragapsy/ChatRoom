@@ -32,6 +32,7 @@ namespace Chat.Repository.Repositories
         public async Task<IEnumerable<ChatRoom>> GetAllAsync(CancellationToken ct = default)
         {
             return await _db.ChatRooms
+                .Include(room => room.Participants)
                 .AsNoTracking()
                 .ToListAsync(ct);
         }
@@ -40,10 +41,10 @@ namespace Chat.Repository.Repositories
         /// Recupere tout le nombre des rooms/>.
         /// </summary>
         public async Task<int> GetUserRoomsCountAsync(Guid userId, CancellationToken ct = default)
-    {
-        return await _db.ChatRooms
-            .CountAsync(room => room.Participants.Any(p => p.Id == userId), ct);
-    }
+        {
+            return await _db.ChatRooms
+                .CountAsync(room => room.Participants.Any(p => p.Id == userId), ct);
+        }
 
         /// <summary>Adding participant</summary>
         public async Task AddParticipantAsync(Guid roomId, Guid userId, CancellationToken ct = default)
@@ -56,6 +57,25 @@ namespace Chat.Repository.Repositories
                 room.Participants.Add(user);
                 await _db.SaveChangesAsync(ct);
             }
+        }
+
+        /// <inheritdoc />
+        public async Task<IEnumerable<ChatMessage>> GetMessageHistoryAsync(Guid roomId, CancellationToken ct = default)
+        {
+            return await _db.ChatMessages
+                .Where(m => m.RoomId == roomId)
+                .Include(m => m.Author)
+                .OrderBy(m => m.CreatedAt)
+                .AsNoTracking()
+                .ToListAsync(ct);
+        }
+        
+        /// <inheritdoc />
+        public async Task<ChatRoom?> GetChatRoomAsync(Guid roomId, CancellationToken ct = default)
+        {
+            return await _db.ChatRooms
+                .Include(r => r.Participants) 
+                .FirstOrDefaultAsync(r => r.Id == roomId, ct);
         }
     }
 }

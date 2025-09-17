@@ -1,61 +1,119 @@
 <div class="chat-layout">
 
-    <div class="rooms-list-container">
+    <div class="rooms-list-container" [class.collapsed]="isSidebarCollapsed()">
         <div class="rooms-list-header">
-            <h3 class="text-xl font-semibold">Salons</h3>
+            @if (!isSidebarCollapsed()) {
+                <h3 class="text-xl font-semibold">Salons</h3>
+            }
+            @if (isSidebarCollapsed()) {
+                <button (click)="expandSidebar()" title="Afficher les salons" class="sidebar-toggle-button">
+                    <ng-icon name="saxMenuBulk" size="1.5rem"></ng-icon>
+                </button>
+            }
             <button (click)="openCreateModal()" title="Créer un salon" class="create-room-button">+</button>
         </div>
-
-        @if (roomError()) {
-        <div class="room-error">
-            {{ roomError() }}
-        </div>
-    }
         
-        <ul class="rooms-list">
-            @for (room of chatRooms(); track room.id) {
-                <li 
-                    class="room-item" 
-                    (click)="selectRoom(room)"
-                    [class.selected]="room.id === selectedRoom()?.id">
-                    {{ room.name }}
-                </li>
-            } @empty {
-                <li class="room-item-empty">Créez le premier salon !</li>
+        @if (!isSidebarCollapsed()) {
+            <div class="view-tabs">
+                <button [class.active]="activeView() === 'joined'" (click)="activeView.set('joined')">Mes Salons</button>
+                <button [class.active]="activeView() === 'all'" (click)="activeView.set('all')">Découvrir</button>
+            </div>
+            @if (roomError()) {
+                <div class="room-error">{{ roomError() }}</div>
             }
-        </ul>
+            @switch (activeView()) {
+                @case ('joined') {
+                    <ul class="rooms-list">
+                        @for (room of joinedRooms(); track room.id) {
+                            <li class="room-item" (click)="switchRoom(room)" [class.selected]="room.id === selectedRoom()?.id">
+                                {{ room.name }}
+                            </li>
+                        } @empty {
+                            <li class="room-item-empty">Rejoignez un salon depuis l'onglet "Découvrir".</li>
+                        }
+                    </ul>
+                }
+                @case ('all') {
+                    <ul class="rooms-list">
+                        @for (room of allRooms(); track room.id) {
+                            <li class="room-item" (click)="joinNewRoom(room)">
+                                <span>{{ room.name }}</span>
+                            </li>
+                        } @empty {
+                            <li class="room-item-empty">Aucun salon à découvrir.</li>
+                        }
+                    </ul>
+                }
+            }
+        }
     </div>
 
-    <div class="chat-view-container">
-        @if (selectedRoom(); as room) {
-            <ul class="message-list">
-                @for (msg of messages(); track msg.id) {
-                    <li class="message-item">
-                        <div class="message-author">{{ msg.authorFullName }}</div>
-                        <div class="message-content">{{ msg.content }}</div>
-                    </li>
-                } @empty {
-                    <li class="message-item-empty">Soyez le premier à envoyer un message !</li>
-                }
-            </ul>
-            
-            <div class="message-input-area">
+    <div class="main-view-wrapper">
+        <div class="chat-view-container">
+            @if (selectedRoom(); as room) {
+                <div class="chat-header">
+                    <h2 class="text-2xl font-bold">{{ room.name }}</h2>
+                    <button (click)="toggleParticipants()" class="participants-toggle-button" title="Voir les participants">
+                        <ng-icon name="saxPeopleBulk" size="1.5rem"></ng-icon>
+                    </button>
                 </div>
-        } @else {
-            <div class="no-room-selected">
-                <p>Sélectionnez un salon pour commencer à discuter.</p>
+                
+                <ul class="message-list">
+                    @for (msg of messages(); track msg.id) {
+                        <li class="message-item">
+                            <div class="message-author">{{ getAuthorName(msg.authorId) }}</div>
+                            <div class="message-content">{{ msg.content }}</div>
+                        </li>
+                    } @empty {
+                        <li class="message-item-empty">Soyez le premier à envoyer un message !</li>
+                    }
+                </ul>
+                
+                <div class="message-input-area">
+                    @if(activityNotification(); as notification) {
+                        <div class="activity-notification">
+                            {{ notification }}
+                        </div>
+                    }
+                    <form [formGroup]="messageForm" (ngSubmit)="sendMessage()">
+                        <input formControlName="content" type="text" placeholder="Écrivez votre message..." class="message-input">
+                        <button type="submit" [disabled]="messageForm.invalid" class="send-button">
+                            <ng-icon name="tablerSend" size="1.5rem"></ng-icon>
+                        </button>
+                    </form>
+                </div>
+            } @else {
+                <div class="no-room-selected">
+                    <p>Sélectionnez un salon pour commencer à discuter.</p>
+                </div>
+            }
+        </div>
+
+        @if (selectedRoom(); as room) {
+            <div class="participants-list-container" [class.visible]="showParticipants()">
+                <div class="participants-header">
+                    <h3 class="participants-title">Participants ({{ room.participants.length }})</h3>
+                    <button (click)="toggleParticipants()" class="close-participants-button" title="Fermer">✕</button>
+                </div>
+                <ul class="participants-list">
+                    @for (participant of room.participants; track participant.id) {
+                        <li class="participant-item">
+                            <span>{{ participant.firstName }} {{ participant.lastName }}</span>
+                        </li>
+                    }
+                </ul>
             </div>
         }
     </div>
 </div>
 
 @if (showCreateModal()) {
-  <div class="modal-backdrop" (click)="onRoomCreated()"></div>
-  <div class="modal">
-    <div class="modal-card">
-      <button class="modal-close" type="button" (click)="onRoomCreated()">✕</button>
-      <h3 class="modal-title">Créer une chatroom</h3>
-      <app-chatrooms-create (created)="onRoomCreated()"></app-chatrooms-create>
+    <div class="modal-backdrop" (click)="onRoomCreated()"></div>
+    <div class="modal">
+        <div class="modal-card">
+            <button class="modal-close" type="button" (click)="onRoomCreated()">✕</button>
+            <h3 class="modal-title">Créer une chatroom</h3>
+            <app-chatrooms-create (created)="onRoomCreated()"></app-chatrooms-create>
+        </div>
     </div>
-  </div>
 }
